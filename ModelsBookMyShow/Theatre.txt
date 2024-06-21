@@ -1,0 +1,12 @@
+public class Theatre
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required(ErrorMessage = "Name is mandatory")]
+    public string Name { get; set; }
+
+    [EnumDataType(typeof(City))]
+    public string City { get; set; }
+
+}
