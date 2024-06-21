@@ -1,0 +1,24 @@
+public class Seat
+{
+    
+    public int Number { get; set; }
+
+
+    [ForeignKey("Show"), Column(Order = 0)]
+    public string ShowTime { get; set; }
+
+
+    [ForeignKey("Show"), Column(Order = 1)]
+    public int TheatreId { get; set; }
+
+
+    [ForeignKey("Show"), Column(Order = 2)]
+    public int MovieId { get; set; }
+
+    [ForeignKey("Ticket")]              // Optional Foreign Key (nullable)
+    public int TicketId { get; set; }
+
+    [EnumDataType(typeof(SeatStatus))]
+    public string Availability { get; set; }
+
+}
