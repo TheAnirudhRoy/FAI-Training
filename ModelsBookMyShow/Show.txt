@@ -1,0 +1,11 @@
+public class Show
+{
+    public string Time { get; set; }
+
+    // Data annotation 
+    [ForeignKeyAttribute("Theatre")]
+    public int TheatreId { get; set; }
+
+    [ForeignKeyAttribute("Movie")]
+    public int MovieId { get; set; }
+}
