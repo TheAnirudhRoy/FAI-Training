@@ -1,0 +1,6 @@
+Update the above component and html in angular
+
+To show Drop-down instead of input type MovieId and TheatreId
+
+in the drop-down Movie Name and Theatre Name should come and upon their selection the list should be generated.
+
