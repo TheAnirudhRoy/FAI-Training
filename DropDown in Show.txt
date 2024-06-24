@@ -3,4 +3,87 @@ Update the above component and html in angular
 To show Drop-down instead of input type MovieId and TheatreId
 
 in the drop-down Movie Name and Theatre Name should come and upon their selection the list should be generated.
+While Listing the Shows Only THOSE MOVIE AND THEATRE SHOULD BE DISPLAYED IN THE DROPDOWN, which are already Present in the SHOW table
 
+AND WHILE ADDING THE SHOWS, ALL MOVIES AND ALL THEATRE SHOULD DISPLAY IN THE DROPDOWN.
+
+Below I am providing the services for theatre and movies,  
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+@Injectable({
+  providedIn: 'root'
+})
+export class MovieService {
+ // private apiUrl = `${environemnt.apiUrl}/movie`;
+ 
+  constructor(private http: HttpClient) { }
+  apiUrl="https://localhost:44353/api/Movie/"
+ 
+  getMovies(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}`);
+  }
+ 
+  getMovie(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  }
+ 
+  addMovie(movie: any): Observable<any> {
+    //return this.http.post<any>(`${this.apiUrl}`, movie);
+    return this.http.post<any>(`${this.apiUrl}`+"PostMovie",movie)
+  }
+ 
+  editMovie(movie: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}` +"UpdateMovie", movie);
+  }
+ 
+  deleteMovie(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}${id}`);
+  }
+ 
+  uploadImage(formData : FormData){
+    return this.http.post(`${this.apiUrl}` + "upload-image",formData);
+  }
+}
+
+now the second one 
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+ 
+@Injectable({
+  providedIn: 'root'
+})
+export class TheatreService {
+  apiUrl = `${environment.apiUrl}/theatre`; // Make sure the environment variable is set correctly
+ 
+  constructor(private http: HttpClient) { }
+ 
+  getTheatres(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl);
+  }
+ 
+  getTheatre(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/id/${id}`);
+  }
+ 
+  getTheatresByCity(city: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/city/${city}`);
+  }
+ 
+  addTheatre(theatre: any): Observable<any> {
+    return this.http.post<any>(this.apiUrl, theatre);
+  }
+ 
+  editTheatre(theatre: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}`, theatre);
+  }
+ 
+  deleteTheatre(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`);
+  }
+}
