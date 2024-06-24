@@ -1,28 +1,36 @@
-use [BookMyShowDB]
-create or alter procedure spc_deleteShow
-@Time nvarchar(50),
-@TheatreId int,
-@MovieId int,
-@Result int output
-as 
+USE BookMyShowDB;
+GO
 
-begin
-declare @DeleteId int;
-set @DeleteId = null;
-	DELETE from Ticket 
-	Output deleted.Id into @DeleteId	 
-	WHERE ShowTime = @Time and TheatreId = @TheatreId and MovieId = @MovieId;
+CREATE OR ALTER PROCEDURE spc_deleteShow
+    @Time nvarchar(50),
+    @TheatreId int,
+    @MovieId int,
+    @Result int OUTPUT
+AS 
+BEGIN
+    DECLARE @DeletedIds TABLE (Id int);
 
-	DELETE from Seat 
-	WHERE TicketId = @DeleteId and ShowTime = @Time and TheatreId = @TheatreId and MovieId = @MovieId;
+    -- Capture deleted Ticket IDs
+    DELETE FROM Ticket 
+    OUTPUT DELETED.Id INTO @DeletedIds
+    WHERE ShowTime = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
 
-	DELETE Show WHERE Time = @Time and TheatreId = @TheatreId and MovieId = @MovieId;
-	IF @@ROWCOUNT > 0
-	BEGIN
-		SET @Result =1;
-	END;
-	ELSE
-		BEGIN
-			set @Result =0;
-		END;
-end;
+    -- Delete corresponding seats based on deleted Ticket IDs
+    DELETE FROM Seat
+    WHERE TicketId IN (SELECT Id FROM @DeletedIds);
+
+    -- Delete the show
+    DELETE FROM Show 
+    WHERE Time = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
+
+    -- Set the result based on whether any rows were affected
+    IF @@ROWCOUNT > 0
+    BEGIN
+        SET @Result = 1;
+    END
+    ELSE
+    BEGIN
+        SET @Result = 0;
+    END;
+END;
+GO
