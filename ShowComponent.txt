@@ -1,0 +1,256 @@
+Below is the DAL of Show Model.
+
+using Book_My_Show_DAL.Interfaces;
+using Book_My_Show_Entities;
+using Dapper;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Book_My_Show_DAL.Implementations
+{
+    public class ShowServices : IShowServices
+    {
+        private IDbConnection _db;
+        private readonly DapperContext _dapperContext;
+
+        public ShowServices(IConfiguration configuration,DapperContext dapperContext)
+        {
+            _db = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            _dapperContext = dapperContext;
+        }
+        public void Add(Show show)
+        {
+            var sqlQuery = "INSERT INTO Show (Time,TheatreId,MovieId) VALUES (@Time,@TheatreId,@MovieId)";
+            _db.Execute(sqlQuery, show);
+        }
+
+        public List<Movie> GetByMovieAndCity(string MovieName,string City)
+        {
+            var queryMovieName = (MovieName == "-1") ? null : MovieName;
+            var queryCity = (City == "-1") ? null : City;
+            var sqlQuery = "SELECT distinct m.Id,m.Name,m.ImdbRating,m.Category,m.Genre,m.ReleaseDate,m.ActorName,m.ActressName,m.ThemePhotoPath FROM ( Show s join Theatre t on s.TheatreId = t.Id ) join Movie m on m.Id = s.MovieId where ( @MovieName is null or m.Name like '%' + @MovieName + '%' ) and ( @City is null or t.City = @City ) ";
+            return _db.Query<Movie>(sqlQuery, new { @MovieName = queryMovieName, @City = queryCity }).ToList();
+        }
+
+        public List<ShowMovieModel> GetShowByMovieAndCity(string MovieId, string City)
+        {
+            var queryCity = (City == "-1") ? null : City;
+            var sqlQuery = "SELECT distinct s.Time,s.TheatreId,s.MovieId,t.Name FROM ( Show s join Theatre t on s.TheatreId = t.Id ) join Movie m on m.Id = s.MovieId where ( @MovieId is null or m.Id = @MovieId ) and ( @City is null or t.City = @City ) ";
+            return _db.Query<ShowMovieModel>(sqlQuery, new { @MovieId = MovieId, @City = queryCity }).ToList();
+        }
+
+        public List<Show> GetByMovieAndTheatre(int MovieId, int TheatreId)
+        {
+            var sqlQuery = "SELECT * FROM Show where MovieId = @MovieId and TheatreId = @TheatreId";
+            return _db.Query<Show>(sqlQuery, new { @MovieId = MovieId , @TheatreId = TheatreId }).ToList();
+        }
+
+        public List<Show> GetByMovieId(int Id)
+        {
+            var sqlQuery = "SELECT * FROM Show where MovieId = @MovieId";
+            return _db.Query<Show>(sqlQuery, new { @MovieId = Id }).ToList();
+        }
+
+        public List<Show> GetByTheatreId(int Id)
+        {
+            var sqlQuery = "SELECT * FROM Show where TheatreId = @TheatreId";
+            return _db.Query<Show>(sqlQuery, new { TheatreId = Id }).ToList();
+        }
+
+        //Have to create the stored Procedures for this
+        public int Delete(Show show)
+        {
+            using (var connection = _dapperContext.CreateConnection())
+            {
+                var sqlQuery = "spc_deleteShow";
+
+                var parameters = new DynamicParameters();
+                parameters.Add("Time", show.Time, DbType.String);
+                parameters.Add("TheatreId", show.TheatreId, DbType.Int32);
+                parameters.Add("MovieId", show.MovieId, DbType.Int32);
+
+                // Define the output parameter
+                parameters.Add("Result", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                connection.Execute(sqlQuery, parameters, commandType: CommandType.StoredProcedure);
+
+                // Retrieve the output value
+                int result = parameters.Get<int>("Result");
+                return result;
+            }
+               
+        }
+
+        public int Update(Show show)
+        {
+            var sqlQuery = "UPDATE Show SET Time = @Time where Time = @Time and TheatreId = @TheatreId and MovieId = @MovieId";
+            var res = _db.Query<int>(sqlQuery);
+            if (res != null)
+            {
+                return 1;
+            }
+            return 0;
+        }
+    }
+}
+
+Now below is the WEB API Controller of Show
+
+using Book_My_Show_BL.Interfaces;
+using Book_My_Show_Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Book_My_Show.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ShowController : ControllerBase
+    {
+
+        private IShowServiceBL _showServices;
+
+        public ShowController(IShowServiceBL showServices)
+        {
+            _showServices = showServices;
+        }
+
+        [HttpPost]
+        public JsonResult Post(Show show)
+        {
+            _showServices.Add(show);
+            return new JsonResult("Added Successfully");
+        }
+
+        [HttpGet("movie/{MovieId}")]
+        public JsonResult GetyMovieId(int MovieId)
+        {
+            var show = _showServices.GetByMovieId(MovieId);
+            return new JsonResult(show);
+        }
+
+        [HttpGet("theatre/{TheatreId}")]
+        public JsonResult GetByTheatreId(int TheatreId)
+        {
+            var movie = _showServices.GetByMovieId(TheatreId);
+            return new JsonResult(movie);
+        }
+
+        [HttpGet("movie/{MovieId}/theatre/{TheatreId}")]
+        public JsonResult GetByMovieAndTheatre(int MovieId,int TheatreId)
+        {
+            var movie = _showServices.GetByMovieAndTheatre(MovieId,TheatreId);
+            return new JsonResult(movie);
+        }
+
+        [HttpGet("movieName/{MovieName}/city/{City}")]
+        public JsonResult GetByMovieAndCity(string MovieName,string City)
+        {
+            var movie = _showServices.GetByMovieAndCity(MovieName,City);
+            return new JsonResult(movie);
+        }
+
+        [HttpGet("movie/{MovieId}/city/{City}")]
+        public JsonResult GetShowByMovieAndCity(string MovieId, string City)
+        {
+            var movie = _showServices.GetShowByMovieAndCity(MovieId, City);
+            return new JsonResult(movie);
+        }
+
+        [HttpPut]
+        public JsonResult Put(Show show)
+        {
+            int res = _showServices.Update(show);
+            if (res == 1)
+                return new JsonResult("Updated Successfully");
+            else
+                return new JsonResult("Updation Unsuccessful");
+        }
+
+        [HttpDelete]
+        public JsonResult Delete(Show show)
+        {
+            int res = _showServices.Delete(show);
+            if (res == 1)
+                return new JsonResult("Deleted Successfully");
+            else
+                return new JsonResult("Deletion Unsuccessful");
+        }
+    }
+}
+
+Now below is the Model of Show:
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Book_My_Show_Entities
+{
+    public class Show
+    {
+        public string Time { get; set; }
+
+        // Data annotation 
+        [ForeignKeyAttribute("Theatre")]
+        public int TheatreId { get; set; }
+
+        [ForeignKeyAttribute("Movie")]
+        public int MovieId { get; set; }
+    }
+}
+
+I have provided the Show services DAL and Show WEP API Controller and Show Entity. 
+Now here is the services provided in the ANGULAR,
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ShowService {
+
+  constructor(private http: HttpClient) { }
+  apiUrl="https://localhost:44353/api/Show"
+
+  getShowsbyMovieId(movieId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}`);
+  }
+
+  getShowsbyTheatreId(theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/theatre/${theatreId}`);
+  }
+
+  getShowsbyMovieAndTheatre(movieId: number, theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}/theatre/${theatreId}`);
+  }
+
+  //getTheatresbyCity service has to be imported in the show Component
+
+  addShow(show: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}`, show);
+  }
+
+  deleteShow(show: any): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}`, show);
+  }
+}
+
+Create an ANGULAR Component for the above Show Model, There should be an Input type for MovieId and TheatreId, after the input, a Search button is pressed and after that all 
+the LIST OF SHOWS are shown. 
+Infront of every SHOW record Delete button functionality required, Add Show Button is also required and its functionality
