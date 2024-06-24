@@ -329,3 +329,188 @@ ng add @ng-bootstrap/ng-bootstrap
 ```
 
 This setup will allow you to search for shows based on selected Movie and Theatre from the dropdowns, add new shows using a modal form, and delete existing shows.
+
+--------------------------------------
+
+The error you are encountering, "Parser Error Bindings cannot contain assignments," occurs when Angular's template parser encounters an assignment within a binding expression. In this case, the problem could stem from using curly braces (`{}`) incorrectly within the template. Here's the updated `show.component.html` with corrections:
+
+### show.component.html
+```html
+<div class="search-container">
+  <h2>Search Shows</h2>
+  <form #searchForm="ngForm" (ngSubmit)="searchShows(searchForm)">
+    <div>
+      <label for="movieId">Movie:</label>
+      <select id="movieId" name="movieId" ngModel required>
+        <option *ngFor="let movie of movies" [value]="movie.id">{{ movie.name }}</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="theatreId">Theatre:</label>
+      <select id="theatreId" name="theatreId" ngModel required>
+        <option *ngFor="let theatre of theatres" [value]="theatre.id">{{ theatre.name }}</option>
+      </select>
+    </div>
+    
+    <button type="submit" [disabled]="!searchForm.valid">Search</button>
+  </form>
+</div>
+
+<div class="add-show-container">
+  <button (click)="openAddShowModal(addShowModal)">Add Show</button>
+</div>
+
+<div class="show-list-container">
+  <h2>List of Shows</h2>
+  <ul>
+    <li *ngFor="let show of shows">
+      Time: {{ show.time }}, 
+      Movie: {{ movies.find(movie => movie.id === show.movieId)?.name }}, 
+      Theatre: {{ theatres.find(theatre => theatre.id === show.theatreId)?.name }}
+      <button (click)="deleteShow(show)">Delete</button>
+    </li>
+  </ul>
+</div>
+
+<ng-template #addShowModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Add Show</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <form #addShowForm="ngForm" (ngSubmit)="addShow(addShowForm)">
+      <div class="form-group">
+        <label for="time">Time:</label>
+        <input id="time" name="time" ngModel type="text" required class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="movieId">Movie:</label>
+        <select id="movieId" name="movieId" ngModel required class="form-control">
+          <option *ngFor="let movie of movies" [value]="movie.id">{{ movie.name }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="theatreId">Theatre:</label>
+        <select id="theatreId" name="theatreId" ngModel required class="form-control">
+          <option *ngFor="let theatre of theatres" [value]="theatre.id">{{ theatre.name }}</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel click')">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!addShowForm.valid">Add Show</button>
+      </div>
+    </form>
+  </div>
+</ng-template>
+```
+
+### Notes:
+- The `ng-template` for the modal has `let-modal` which provides a reference to the modal instance, allowing it to be dismissed correctly.
+- All binding expressions use the correct Angular syntax.
+
+### show.component.ts (for completeness)
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { ShowService } from '../services/show.service'; // Update the path as necessary
+import { MovieService } from '../services/movie.service'; // Update the path as necessary
+import { TheatreService } from '../services/theatre.service'; // Update the path as necessary
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgForm } from '@angular/forms';
+
+@Component({
+  selector: 'app-show',
+  templateUrl: './show.component.html',
+  styleUrls: ['./show.component.css']
+})
+export class ShowComponent implements OnInit {
+  shows: any[] = [];
+  movies: any[] = [];
+  theatres: any[] = [];
+  selectedMovieId: number | null = null;
+  selectedTheatreId: number | null = null;
+  selectedShow: any = {};
+
+  constructor(
+    private showService: ShowService,
+    private movieService: MovieService,
+    private theatreService: TheatreService,
+    private modalService: NgbModal
+  ) {}
+
+  ngOnInit(): void {
+    this.loadMoviesAndTheatres();
+  }
+
+  loadMoviesAndTheatres(): void {
+    this.movieService.getMovies().subscribe(
+      (data) => {
+        this.movies = data;
+      },
+      (error) => {
+        console.error('Error fetching movies:', error);
+      }
+    );
+
+    this.theatreService.getTheatres().subscribe(
+      (data) => {
+        this.theatres = data;
+      },
+      (error) => {
+        console.error('Error fetching theatres:', error);
+      }
+    );
+  }
+
+  searchShows(searchForm: NgForm): void {
+    const { movieId, theatreId } = searchForm.value;
+    this.showService.getShowsbyMovieAndTheatre(movieId, theatreId).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+  deleteShow(show: any): void {
+    this.showService.deleteShow(show).subscribe(
+      (result) => {
+        console.log(result);
+        this.searchShows({ value: { movieId: show.movieId, theatreId: show.theatreId } } as NgForm); // Refresh the list after deletion
+      },
+      (error) => {
+        console.error('Error deleting show:', error);
+      }
+    );
+  }
+
+  openAddShowModal(content: any): void {
+    this.selectedShow = {};
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' });
+  }
+
+  addShow(addShowForm: NgForm): void {
+    const newShow = addShowForm.value;
+    this.showService.addShow(newShow).subscribe(
+      (result) => {
+        console.log(result);
+        this.modalService.dismissAll();
+        this.searchShows({ value: { movieId: newShow.movieId, theatreId: newShow.theatreId } } as NgForm); // Refresh the list after adding
+      },
+      (error) => {
+        console.error('Error adding show:', error);
+      }
+    );
+  }
+}
+```
+
+### Additional Notes:
+- Ensure that you have the necessary services (`ShowService`, `MovieService`, and `TheatreService`) configured correctly with appropriate API endpoints.
+- Ensure that the HTML structure aligns with Angular’s template syntax.
+- The dropdowns are populated with movie and theatre data as fetched from their respective services.
+- The component handles searching, adding, and deleting shows, and it uses `NgbModal` for modal dialogs.
+
+With these changes, the component should work correctly, displaying the list of shows based on the selected movie and theatre from the dropdowns, and allowing for adding and deleting shows.
