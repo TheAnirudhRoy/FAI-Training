@@ -254,3 +254,219 @@ export class ShowService {
 Create an ANGULAR Component for the above Show Model, There should be an Input type for MovieId and TheatreId, after the input, a Search button is pressed and after that all 
 the LIST OF SHOWS are shown. 
 Infront of every SHOW record Delete button functionality required, Add Show Button is also required and its functionality
+
+------------------------------------------
+
+Here's the Angular component for the `Show` model. This component will have input fields for `MovieId` and `TheatreId`, a search button to fetch the list of shows based on these inputs, and a delete button for each show record. Additionally, it includes functionality to add a new show.
+
+First, ensure you have the necessary Angular service (`ShowService`) and other dependencies injected and ready.
+
+### show.component.ts
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { ShowService } from '../services/show.service'; // Update the path as necessary
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-show',
+  templateUrl: './show.component.html',
+  styleUrls: ['./show.component.css']
+})
+export class ShowComponent implements OnInit {
+  shows: any[] = [];
+  showForm: FormGroup;
+  addShowForm: FormGroup;
+  
+  constructor(private showService: ShowService, private fb: FormBuilder) {
+    this.showForm = this.fb.group({
+      movieId: ['', Validators.required],
+      theatreId: ['', Validators.required]
+    });
+
+    this.addShowForm = this.fb.group({
+      time: ['', Validators.required],
+      movieId: ['', Validators.required],
+      theatreId: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {}
+
+  searchShows(): void {
+    const { movieId, theatreId } = this.showForm.value;
+    this.showService.getShowsbyMovieAndTheatre(movieId, theatreId).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+  deleteShow(show: any): void {
+    this.showService.deleteShow(show).subscribe(
+      (result) => {
+        console.log(result);
+        this.searchShows(); // Refresh the list after deletion
+      },
+      (error) => {
+        console.error('Error deleting show:', error);
+      }
+    );
+  }
+
+  addShow(): void {
+    const newShow = this.addShowForm.value;
+    this.showService.addShow(newShow).subscribe(
+      (result) => {
+        console.log(result);
+        this.searchShows(); // Refresh the list after adding
+      },
+      (error) => {
+        console.error('Error adding show:', error);
+      }
+    );
+  }
+}
+```
+
+### show.component.html
+```html
+<div class="search-container">
+  <h2>Search Shows</h2>
+  <form [formGroup]="showForm" (ngSubmit)="searchShows()">
+    <label for="movieId">Movie ID:</label>
+    <input id="movieId" formControlName="movieId" type="text" />
+    
+    <label for="theatreId">Theatre ID:</label>
+    <input id="theatreId" formControlName="theatreId" type="text" />
+    
+    <button type="submit" [disabled]="showForm.invalid">Search</button>
+  </form>
+</div>
+
+<div class="add-show-container">
+  <h2>Add Show</h2>
+  <form [formGroup]="addShowForm" (ngSubmit)="addShow()">
+    <label for="time">Time:</label>
+    <input id="time" formControlName="time" type="text" />
+    
+    <label for="addMovieId">Movie ID:</label>
+    <input id="addMovieId" formControlName="movieId" type="text" />
+    
+    <label for="addTheatreId">Theatre ID:</label>
+    <input id="addTheatreId" formControlName="theatreId" type="text" />
+    
+    <button type="submit" [disabled]="addShowForm.invalid">Add Show</button>
+  </form>
+</div>
+
+<div class="show-list-container">
+  <h2>List of Shows</h2>
+  <ul>
+    <li *ngFor="let show of shows">
+      Time: {{ show.time }}, Movie ID: {{ show.movieId }}, Theatre ID: {{ show.theatreId }}
+      <button (click)="deleteShow(show)">Delete</button>
+    </li>
+  </ul>
+</div>
+```
+
+### show.component.css
+```css
+.search-container, .add-show-container, .show-list-container {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin: 5px 0;
+}
+
+input {
+  margin-bottom: 10px;
+}
+
+button {
+  margin-top: 10px;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin-bottom: 10px;
+}
+```
+
+### show.service.ts
+Ensure your service is correctly defined and imported as shown in the original code snippet:
+
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ShowService {
+  constructor(private http: HttpClient) {}
+
+  apiUrl = `${environment.apiUrl}/Show`;
+
+  getShowsbyMovieId(movieId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}`);
+  }
+
+  getShowsbyTheatreId(theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/theatre/${theatreId}`);
+  }
+
+  getShowsbyMovieAndTheatre(movieId: number, theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}/theatre/${theatreId}`);
+  }
+
+  addShow(show: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}`, show);
+  }
+
+  deleteShow(show: any): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}`, { body: show });
+  }
+}
+```
+
+### app.module.ts
+Make sure to import `ReactiveFormsModule` and register your component and service in the app module:
+
+```typescript
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { ReactiveFormsModule } from '@angular/forms';
+
+import { AppComponent } from './app.component';
+import { ShowComponent } from './show/show.component';
+import { ShowService } from './services/show.service'; // Update the path as necessary
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    ShowComponent
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    ReactiveFormsModule
+  ],
+  providers: [ShowService],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+With this setup, your Angular component will be able to search for shows based on `MovieId` and `TheatreId`, add new shows, and delete existing ones.
