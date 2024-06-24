@@ -1,0 +1,28 @@
+use [BookMyShowDB]
+create or alter procedure spc_deleteShow
+@Time nvarchar(50),
+@TheatreId int,
+@MovieId int,
+@Result int output
+as 
+
+begin
+declare @DeleteId int;
+set @DeleteId = null;
+	DELETE from Ticket 
+	Output deleted.Id into @DeleteId	 
+	WHERE ShowTime = @Time and TheatreId = @TheatreId and MovieId = @MovieId;
+
+	DELETE from Seat 
+	WHERE TicketId = @DeleteId and ShowTime = @Time and TheatreId = @TheatreId and MovieId = @MovieId;
+
+	DELETE Show WHERE Time = @Time and TheatreId = @TheatreId and MovieId = @MovieId;
+	IF @@ROWCOUNT > 0
+	BEGIN
+		SET @Result =1;
+	END;
+	ELSE
+		BEGIN
+			set @Result =0;
+		END;
+end;
