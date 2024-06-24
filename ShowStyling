@@ -211,3 +211,165 @@ li button:hover {
   color: #dc3545;
 }
 
+------------------------------------------------------------------
+<div class="show-list-container">
+  <h2>List of Shows</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Movie ID</th>
+        <th>Theatre ID</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let show of shows">
+        <td>{{ show.time }}</td>
+        <td>{{ show.movieId }}</td>
+        <td>{{ show.theatreId }}</td>
+        <td><button (click)="deleteShow(show)">Delete</button></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+----------------------------------------------------------------------------
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  padding: 20px;
+}
+
+.search-container, .add-show-container, .show-list-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  color: #007bff;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin: 10px 0 5px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+button:disabled {
+  background-color: #ccc;
+}
+
+button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+thead {
+  background-color: #f8f9fa;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tbody tr:hover {
+  background-color: #e9ecef;
+}
+
+td button {
+  background-color: #dc3545;
+  font-size: 14px;
+  padding: 5px 10px;
+}
+
+td button:hover {
+  background-color: #c82333;
+}
+
+.modal-header, .modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-title {
+  margin: 0;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 10px 20px;
+  border-top: 1px solid #dee2e6;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  color: #dc3545;
+}
