@@ -1,32 +1,65 @@
-.search-container, .add-show-container, .show-list-container {
-  margin-bottom: 20px;
-}
+import { Component, OnInit } from '@angular/core';
+import { ShowService } from '../../services/show.service'; 
+import { MovieService } from '../../services/movie.service'; 
+import { TheatreService } from '../../services/theatre.service'; 
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgForm } from '@angular/forms';
 
-label {
-  display: block;
-  margin: 5px 0;
-}
+@Component({
+  selector: 'app-shows-management',
+  templateUrl: './shows-management.component.html',
+  styleUrl: './shows-management.component.css'
+})
+export class ShowsManagementComponent implements OnInit {
+  shows: any[] = [];
+  selectedShow: any = {};
 
-input {
-  margin-bottom: 10px;
-}
+  constructor(private showService: ShowService, private modalService: NgbModal) {}
 
-button {
-  margin-top: 10px;
-}
+  ngOnInit(): void {}
 
-ul {
-  list-style-type: none;
-}
+  searchShows(searchForm: NgForm): void {
+    const { movieId, theatreId } = searchForm.value;
+    this.showService.getShowsbyMovieAndTheatre(movieId, theatreId).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
 
-li {
-  margin-bottom: 10px;
-}
+  deleteShow(show: any): void {
+    this.showService.deleteShow(show.time, show.movieId, show.theatreId).subscribe(
+      (result) => {
+        console.log(result);
+        this.searchShows({ value: { movieId: show.movieId, theatreId: show.theatreId } } as NgForm); // Refresh the list after deletion
+      },
+      (error) => {
+        console.error('Error deleting show:', error);
+      }
+    );
+  }
 
-.modal-header, .modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  openAddShowModal(content: any): void {
+    this.selectedShow = {};
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' });
+  }
+
+  addShow(addShowForm: NgForm): void {
+    const newShow = addShowForm.value;
+    this.showService.addShow(newShow).subscribe(
+      (result) => {
+        console.log(result);
+        this.modalService.dismissAll();
+        this.searchShows({ value: { movieId: newShow.movieId, theatreId: newShow.theatreId } } as NgForm); // Refresh the list after adding
+      },
+      (error) => {
+        console.error('Error adding show:', error);
+      }
+    );
+  }
 }
 
 =======================================================
@@ -48,7 +81,7 @@ li {
     <button (click)="openAddShowModal(addShowModal)">Add Show</button>
   </div>
   
-  <div class="show-list-container">
+  <!-- <div class="show-list-container">
     <h2>List of Shows</h2>
     <ul>
       <li *ngFor="let show of shows">
@@ -56,6 +89,28 @@ li {
         <button (click)="deleteShow(show)">Delete</button>
       </li>
     </ul>
+  </div> -->
+
+  <div class="show-list-container">
+    <h2>List of Shows</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Show Time</th>
+          <th>Movie ID</th>
+          <th>Theatre ID</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let show of shows">
+          <td>{{ show.time }}</td>
+          <td>{{ show.movieId }}</td>
+          <td>{{ show.theatreId }}</td>
+          <td><button (click)="deleteShow(show)">Delete</button></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   
   <ng-template #addShowModal let-modal>
@@ -85,154 +140,6 @@ li {
     </div>
   </ng-template>
 
-============================================
-
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f8f9fa;
-  color: #333;
-  padding: 20px;
-}
-
-.search-container, .add-show-container, .show-list-container {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-h2 {
-  color: #007bff;
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  margin: 10px 0 5px;
-}
-
-input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-button {
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-top: 10px;
-}
-
-button:disabled {
-  background-color: #ccc;
-}
-
-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  background: #f1f1f1;
-  border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-li button {
-  background-color: #dc3545;
-  font-size: 14px;
-}
-
-li button:hover {
-  background-color: #c82333;
-}
-
-.modal-header, .modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.modal-header {
-  border-bottom: none;
-}
-
-.modal-title {
-  margin: 0;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.modal-footer {
-  padding: 10px 20px;
-  border-top: 1px solid #dee2e6;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.btn-close:hover {
-  color: #dc3545;
-}
-
-------------------------------------------------------------------
-<div class="show-list-container">
-  <h2>List of Shows</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Movie ID</th>
-        <th>Theatre ID</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let show of shows">
-        <td>{{ show.time }}</td>
-        <td>{{ show.movieId }}</td>
-        <td>{{ show.theatreId }}</td>
-        <td><button (click)="deleteShow(show)">Delete</button></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
 ----------------------------------------------------------------------------
 
 body {
