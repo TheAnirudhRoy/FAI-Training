@@ -1,0 +1,86 @@
+.search-container, .add-show-container, .show-list-container {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin: 5px 0;
+}
+
+input {
+  margin-bottom: 10px;
+}
+
+button {
+  margin-top: 10px;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+.modal-header, .modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+=======================================================
+
+<div class="search-container">
+    <h2>Search Shows</h2>
+    <form #searchForm="ngForm" (ngSubmit)="searchShows(searchForm)">
+      <label for="movieId">Movie ID:</label>
+      <input id="movieId" name="movieId" ngModel type="text" required />
+      
+      <label for="theatreId">Theatre ID:</label>
+      <input id="theatreId" name="theatreId" ngModel type="text" required />
+      
+      <button type="submit" [disabled]="!searchForm.valid">Search</button>
+    </form>
+  </div>
+  
+  <div class="add-show-container">
+    <button (click)="openAddShowModal(addShowModal)">Add Show</button>
+  </div>
+  
+  <div class="show-list-container">
+    <h2>List of Shows</h2>
+    <ul>
+      <li *ngFor="let show of shows">
+        Time: {{ show.time }}, Movie ID: {{ show.movieId }}, Theatre ID: {{ show.theatreId }}
+        <button (click)="deleteShow(show)">Delete</button>
+      </li>
+    </ul>
+  </div>
+  
+  <ng-template #addShowModal let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Add Show</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+      <form #addShowForm="ngForm" (ngSubmit)="addShow(addShowForm)">
+        <div class="form-group">
+          <label for="time">Time:</label>
+          <input id="time" name="time" ngModel type="text" required class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="movieId">Movie ID:</label>
+          <input id="movieId" name="movieId" ngModel type="text" required class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="theatreId">Theatre ID:</label>
+          <input id="theatreId" name="theatreId" ngModel type="text" required class="form-control" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel click')">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!addShowForm.valid">Add Show</button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
