@@ -514,3 +514,188 @@ export class ShowComponent implements OnInit {
 - The component handles searching, adding, and deleting shows, and it uses `NgbModal` for modal dialogs.
 
 With these changes, the component should work correctly, displaying the list of shows based on the selected movie and theatre from the dropdowns, and allowing for adding and deleting shows.
+
+NEW -----------------------------------
+
+The error code 415 indicates that the server is rejecting the request because it doesn't support the format of the payload sent by the client. This typically occurs when the `Content-Type` header is not set correctly, or the server is expecting a different format.
+
+In Angular's `HttpClient`, the `delete` method does not support sending a body by default. Instead, you should pass the parameters in the URL or use a different approach.
+
+Here's how you can adjust the code to handle deletion correctly:
+
+### Update `show.service.ts`
+Modify the `deleteShow` method to include the parameters in the URL instead of passing a body:
+
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ShowService {
+
+  constructor(private http: HttpClient) { }
+  apiUrl = "https://localhost:44353/api/Show";
+
+  getShowsbyMovieId(movieId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}`);
+  }
+
+  getShowsbyTheatreId(theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/theatre/${theatreId}`);
+  }
+
+  getShowsbyMovieAndTheatre(movieId: number, theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}/theatre/${theatreId}`);
+  }
+
+  addShow(show: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}`, show);
+  }
+
+  deleteShow(time: string, movieId: number, theatreId: number): Observable<any> {
+    const params = new HttpParams()
+      .set('Time', time)
+      .set('MovieId', movieId.toString())
+      .set('TheatreId', theatreId.toString());
+
+    return this.http.delete<any>(`${this.apiUrl}`, { params });
+  }
+}
+```
+
+### Update `show.component.ts`
+Modify the `deleteShow` method in the component to call the updated service method correctly:
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { ShowService } from '../services/show.service'; // Update the path as necessary
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgForm } from '@angular/forms';
+
+@Component({
+  selector: 'app-show',
+  templateUrl: './show.component.html',
+  styleUrls: ['./show.component.css']
+})
+export class ShowComponent implements OnInit {
+  shows: any[] = [];
+  selectedShow: any = {};
+
+  constructor(private showService: ShowService, private modalService: NgbModal) {}
+
+  ngOnInit(): void {}
+
+  searchShows(searchForm: NgForm): void {
+    const { movieId, theatreId } = searchForm.value;
+    this.showService.getShowsbyMovieAndTheatre(movieId, theatreId).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+  deleteShow(show: any): void {
+    this.showService.deleteShow(show.time, show.movieId, show.theatreId).subscribe(
+      (result) => {
+        console.log(result);
+        this.searchShows({ value: { movieId: show.movieId, theatreId: show.theatreId } } as NgForm); // Refresh the list after deletion
+      },
+      (error) => {
+        console.error('Error deleting show:', error);
+      }
+    );
+  }
+
+  openAddShowModal(content: any): void {
+    this.selectedShow = {};
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' });
+  }
+
+  addShow(addShowForm: NgForm): void {
+    const newShow = addShowForm.value;
+    this.showService.addShow(newShow).subscribe(
+      (result) => {
+        console.log(result);
+        this.modalService.dismissAll();
+        this.searchShows({ value: { movieId: newShow.movieId, theatreId: newShow.theatreId } } as NgForm); // Refresh the list after adding
+      },
+      (error) => {
+        console.error('Error adding show:', error);
+      }
+    );
+  }
+}
+```
+
+### Update `show.component.html`
+No changes are needed here for the HTML as it remains the same. The structure should still correctly bind to the methods in your component:
+
+```html
+<div class="search-container">
+  <h2>Search Shows</h2>
+  <form #searchForm="ngForm" (ngSubmit)="searchShows(searchForm)">
+    <label for="movieId">Movie ID:</label>
+    <input id="movieId" name="movieId" ngModel type="text" required />
+    
+    <label for="theatreId">Theatre ID:</label>
+    <input id="theatreId" name="theatreId" ngModel type="text" required />
+    
+    <button type="submit" [disabled]="!searchForm.valid">Search</button>
+  </form>
+</div>
+
+<div class="add-show-container">
+  <button (click)="openAddShowModal(addShowModal)">Add Show</button>
+</div>
+
+<div class="show-list-container">
+  <h2>List of Shows</h2>
+  <ul>
+    <li *ngFor="let show of shows">
+      Time: {{ show.time }}, Movie ID: {{ show.movieId }}, Theatre ID: {{ show.theatreId }}
+      <button (click)="deleteShow(show)">Delete</button>
+    </li>
+  </ul>
+</div>
+
+<ng-template #addShowModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Add Show</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <form #addShowForm="ngForm" (ngSubmit)="addShow(addShowForm)">
+      <div class="form-group">
+        <label for="time">Time:</label>
+        <input id="time" name="time" ngModel type="text" required class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="movieId">Movie ID:</label>
+        <input id="movieId" name="movieId" ngModel type="text" required class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="theatreId">Theatre ID:</label>
+        <input id="theatreId" name="theatreId" ngModel type="text" required class="form-control" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel click')">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!addShowForm.valid">Add Show</button>
+      </div>
+    </form>
+  </div>
+</ng-template>
+```
+
+### Summary
+- The `deleteShow` method in `show.service.ts` now includes the parameters in the URL using `HttpParams`.
+- The `deleteShow` method in `show.component.ts` is updated to call the service correctly.
+- No changes are needed in the HTML template.
+
+With these changes, the deletion should work correctly without encountering the 415 error.
