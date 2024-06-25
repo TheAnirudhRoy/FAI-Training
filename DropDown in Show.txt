@@ -1,3 +1,13 @@
+SELECT * 
+FROM Movie AS M
+INNER JOIN Show AS S
+ON S.MovieId = M.Id
+
+
+----------------------------
+
+
+
 Update the above component and html in angular
 
 To show Drop-down instead of input type MovieId and TheatreId
