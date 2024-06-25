@@ -20,3 +20,16 @@ WHERE M.Name = @MovieName";
 var movieIds = _db.Query<int>(sqlQuery, new { @MovieName = showNames.MovieName }).ToList();
 
 // Now you can use the movieIds variable as needed
+
+===========================================================================
+
+SELECT S.Time, T.Name, M.Name
+FROM Show as S
+INNER JOIN Movie as M
+ON S.MovieId = M.Id
+INNER JOIN Theatre as T
+ON S.TheatreId = T.Id
+WHERE S.TheatreId=4 AND S.MovieId=4
+
+============================================================================
+
