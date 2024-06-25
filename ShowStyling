@@ -157,6 +157,10 @@ body {
   margin-bottom: 20px;
 }
 
+.btnmar {
+  margin-bottom: 10px;
+}
+
 h2 {
   color: #007bff;
   margin-bottom: 20px;
@@ -168,7 +172,7 @@ label {
   margin: 10px 0 5px;
 }
 
-input {
+select, input, button[type="submit"] {
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;
@@ -177,22 +181,18 @@ input {
   font-size: 16px;
 }
 
-button {
-  padding: 10px 15px;
+button[type="submit"] {
   background-color: #007bff;
   color: #fff;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
-  margin-top: 10px;
 }
 
-button:disabled {
+button[type="submit"]:disabled {
   background-color: #ccc;
 }
 
-button:hover:not(:disabled) {
+button[type="submit"]:hover:not(:disabled) {
   background-color: #0056b3;
 }
 
@@ -279,4 +279,13 @@ td button:hover {
 
 .btn-close:hover {
   color: #dc3545;
+}
+
+select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 16px;
 }
