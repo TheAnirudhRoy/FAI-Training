@@ -699,3 +699,183 @@ No changes are needed here for the HTML as it remains the same. The structure sh
 - No changes are needed in the HTML template.
 
 With these changes, the deletion should work correctly without encountering the 415 error.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Instead of Input type, I want a drop-down for all the Movies present in the show model and all the theatre Name in the show model.
+You can suggest a different Task function with different query and make changes accordingly in the services and in component html and in component.ts etc.
+
+Technology used is Angular and Core WEB API in .NET Core.
+
+THIS IS COMPONENT HTML SNIPPET:
+  <div class="search-container">
+    <h2>Search Shows</h2>
+    <form #searchForm="ngForm" (ngSubmit)="searchShows(searchForm)">
+      <label for="movieId">Movie ID:</label>
+      <input id="movieId" name="movieId" ngModel type="text" required />
+      
+      <label for="theatreId">Theatre ID:</label>
+      <input id="theatreId" name="theatreId" ngModel type="text" required />
+      
+      <button type="submit" [disabled]="!searchForm.valid">Search</button>
+    </form>
+  </div>
+
+--------------------
+
+THIS IS COMPONENT.TS SNIPPET:
+shows: any[] = [];
+  selectedShow: any = {};
+
+  constructor(private showService: ShowService, private modalService: NgbModal) {}
+
+  ngOnInit(): void {}
+
+  searchShows(searchForm: NgForm): void {
+    const { movieId, theatreId } = searchForm.value;
+    this.showService.getShowsbyMovieAndTheatre(movieId, theatreId).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+----------------------
+
+export class ShowService {
+
+  constructor(private http: HttpClient) { }
+  apiUrl="https://localhost:44353/api/Show"
+
+  getShowsbyMovieId(movieId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}`);
+  }
+
+  getShowsbyTheatreId(theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/theatre/${theatreId}`);
+  }
+
+  getShowsbyMovieAndTheatre(movieId: number, theatreId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/movie/${movieId}/theatre/${theatreId}`);
+  }
+
+  getShowsbyTheatreNameAndMovieName(theatreName: string, movieName: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/theatre/${theatreName}/movie/${movieName}`);
+  }
+
+  //getTheatresbyCity service has to be imported in the show Component
+
+  addShow(show: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}`, show);
+  }
+}
+
+--------------------------------
+
+        public async Task<List<ShowNames>> GetByMovieAndTheatre(int MovieId, int TheatreId)
+        {
+            //var sqlQuery = "SELECT * FROM Show where MovieId = @MovieId and TheatreId = @TheatreId";
+            //return _db.Query<ShowNames>(sqlQuery, new { @MovieId = MovieId , @TheatreId = TheatreId }).ToList();
+
+            var sqlQuery = @"SELECT S.Time, T.Name AS TheatreName, M.Name AS MovieName
+                            FROM Show AS S
+                            INNER JOIN Movie AS M ON S.MovieId = M.Id
+                            INNER JOIN Theatre AS T ON S.TheatreId = T.Id
+                            WHERE S.TheatreId = @TheatreId AND S.MovieId = @MovieId";
+
+            var parameters = new { TheatreId = TheatreId, MovieId = MovieId };
+
+            var result = _db.Query<ShowNames>(sqlQuery, parameters);
+            return result.ToList();
+        }
+
+--------------------------------
+bELOW ARE THE USED MODELS:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Book_My_Show_Entities
+{
+    public class ShowNames
+    {
+        public string? Time { get; set; }
+
+        public string? TheatreName { get; set; }
+
+        public string? MovieName { get; set; }
+    }
+}
+
+------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Book_My_Show_Entities
+{
+    public class Movie
+    {
+        [Key]
+        public int? Id { get; set; }
+
+        public string Name { get; set; }
+
+        public decimal ImdbRating { get; set; }
+
+        //[EnumDataType(typeof(MovieCategory))]
+        public string Category { get; set; }
+
+        
+        //[EnumDataType(typeof(MovieGenre))]
+        public string Genre { get; set; }
+
+        
+        public DateTime ReleaseDate { get; set; }
+
+        public int Duration { get; set; }
+        
+        //public string? ActorName { get; set; }
+
+
+        //public string? ActressName { get; set; }
+
+        public string ThemePhotoPath { get; set; }
+    }
+}
+
+---------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Book_My_Show_Entities
+{
+    public class Theatre
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Name is mandatory")]
+        public string Name { get; set; }
+
+        [EnumDataType(typeof(City))]
+        public string City { get; set; }
+
+    }
+}
+
+
