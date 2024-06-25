@@ -1,0 +1,9 @@
+var sqlQuery = @"SELECT DISTINCT S.MovieId
+FROM Show AS S
+INNER JOIN Movie as M
+ON M.Id = S.MovieId
+WHERE M.Name = @MovieName";
+return _db.Query<Show>(sqlQuery, new { @MovieName = showNames.MovieNames }).ToList();
+
+Instead of returning, I want to save the fetched output in a variable, here showNames is an object of model ShowNames which has properties (all strings: Show, MovieName, TheatreName), 
+I think we are using dapper here.
