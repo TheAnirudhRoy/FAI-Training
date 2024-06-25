@@ -33,3 +33,20 @@ WHERE S.TheatreId=4 AND S.MovieId=4
 
 ============================================================================
 
+public async Task<List<ShowNames>> Get(int movieId, int theatreId)
+    {
+        var sqlQuery = @"
+            SELECT S.Time, T.Name AS TheatreName, M.Name AS MovieName
+            FROM Show AS S
+            INNER JOIN Movie AS M ON S.MovieId = M.Id
+            INNER JOIN Theatre AS T ON S.TheatreId = T.Id
+            WHERE S.TheatreId = @TheatreId AND S.MovieId = @MovieId";
+
+        var parameters = new { TheatreId = theatreId, MovieId = movieId };
+
+        var result = await _db.QueryAsync<ShowNames>(sqlQuery, parameters);
+        return result.ToList();
+    }
+
+===============================================================================
+
