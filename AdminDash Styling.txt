@@ -1,49 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome Admin Card</title>
-    <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-image: url('path_to_background_image.jpg');
-            background-size: cover;
-            background-position: center;
-        }
-        .card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 2px solid black;
-            background-color: #f8f8f8; /* off-white color */
-            padding: 20px;
-            width: 400px;
-            height: 200px;
-            font-family: Arial, sans-serif;
-        }
-        .text {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .image {
-            width: 100px;
-            height: 100px;
-            background: url('path_to_your_image.jpg') no-repeat center center;
-            background-size: contain;
-        }
-    </style>
-</head>
-<body>
-    <div class="card">
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav id="sidebarMenu" class="sidebar">
+      <div class="position-sticky">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" routerLink="/admin" *ngIf="isAuthenticated()">
+              <img src="../../../assets/images/bookmyshow-logo.png" class="small-logo" alt="Logo">
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/admin/movies" *ngIf="isAuthenticated()">
+              Manage Movies
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/admin/theatres" *ngIf="isAuthenticated()">
+              Manage Theatres
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/admin/shows" *ngIf="isAuthenticated()">
+              Manage Shows
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main id="mainContent" class="main-content">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom tran">
+        <button class="toggle-button" (click)="toggleSidebar()">☰</button>
+        <h1 class="h2">Admin Dashboard</h1>
+        <!-- <button class="btn btn-danger" (click)="logout()">Logout</button> -->
+        <ul class="navbar-nav navbar-right">
+          <li *ngIf="isAuthenticated()">
+            <button class="btn btn-danger" (click)="logout()">Log off</button>
+          </li>
+        </ul>
+      </div>
+      <div class="card">
         <div class="text">
             Welcome Admin
         </div>
         <div class="image"></div>
     </div>
-</body>
-</html>
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
