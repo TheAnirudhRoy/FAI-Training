@@ -8,29 +8,42 @@ CREATE OR ALTER PROCEDURE spc_deleteShow
     @Result int OUTPUT
 AS 
 BEGIN
-    DECLARE @DeletedIds TABLE (Id int);
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
-    -- Capture deleted Ticket IDs
-    DELETE FROM Ticket 
-    OUTPUT DELETED.Id INTO @DeletedIds
-    WHERE ShowTime = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
+        -- Update the Seat table
+        UPDATE Seat
+        SET
+            ShowTime = NULL,
+            MovieId = NULL,
+            TicketId = NULL,
+            Availability = CASE WHEN Availability = 'Booked' THEN 'Available' ELSE Availability END
+        WHERE ShowTime = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
 
-    -- Delete corresponding seats based on deleted Ticket IDs
-    DELETE FROM Seat
-    WHERE TicketId IN (SELECT Id FROM @DeletedIds);
+        -- Delete from Ticket table
+        DELETE FROM Ticket
+        WHERE ShowTime = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
 
-    -- Delete the show
-    DELETE FROM Show 
-    WHERE Time = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
+        -- Delete from Show table
+        DELETE FROM Show
+        WHERE Time = @Time AND TheatreId = @TheatreId AND MovieId = @MovieId;
 
-    -- Set the result based on whether any rows were affected
-    IF @@ROWCOUNT > 0
-    BEGIN
-        SET @Result = 1;
-    END
-    ELSE
-    BEGIN
-        SET @Result = 0;
-    END;
+        -- Set @Result based on whether the show record was deleted
+        IF @@ROWCOUNT > 0
+        BEGIN
+            SET @Result = 1;
+        END
+        ELSE
+        BEGIN
+            SET @Result = 0;
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        -- Return error
+        SET @Result = -1;
+    END CATCH;
 END;
 GO
