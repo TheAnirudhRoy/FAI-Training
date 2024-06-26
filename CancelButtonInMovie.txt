@@ -1,0 +1,215 @@
+import { Component, OnInit } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { CategoryService } from '../../services/category.service';
+import { GenreService } from '../../services/genre.service';
+import { MovieService } from '../../services/movie.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+
+@Component({
+  selector: 'app-add-movie',
+  templateUrl: './add-movie.component.html',
+  styleUrls: ['./add-movie.component.css']
+})
+export class AddMovieComponent implements OnInit {
+  movie: any = {}; // Object to hold movie data
+  categories: any[] = [];
+  genres: any[] = [];
+  themePhotoPath: string = '';
+  selectedFile:File | null = null;
+
+  constructor(
+    private categoryService: CategoryService, 
+    private genreService: GenreService,
+    private movieService: MovieService,
+    //private route: ActivatedRoute,
+    private router:Router
+        ) {}
+
+  ngOnInit(): void {
+    this.loadCategories();
+    this.loadGenres();
+  }
+
+  loadCategories(): void {
+    this.categoryService.getCategories().subscribe(
+      categories => {
+        this.categories = categories;
+      },
+      error => {
+        console.error('Error loading categories:', error);
+      }
+    );
+  }
+
+  loadGenres(): void {
+    this.genreService.getGenres().subscribe(
+      genres => {
+        this.genres = genres;
+      },
+      error => {
+        console.error('Error loading genres:', error);
+      }
+    );
+  }
+
+  // onSubmit(): void {
+  //   // Add logic to handle form submission and call movieService to add movie
+  //   this.movie.themePhotoPath = this.themePhotoPath; // Assign theme photo path to movie object
+  //   this.movieService.addMovie(this.movie).subscribe(() =>{
+  //     this.router.navigate(['/movies-management']);
+  //   })
+  // }
+
+  // onFileChange(event: any): void {
+  //   const file = event.target.files[0];
+  //   // Implement logic to handle file upload and extract path (themePhotoPath)
+  //   this.themePhotoPath = 'path-to-your-uploaded-file'; // Placeholder for actual file path
+  // }
+
+  // saveMovie(){
+  //   this.movieService.addMovie(this.movie).subscribe(() => {
+  //     this.router.navigate(['/admin/movies-management']);
+  //   });
+  // }
+
+//   onSubmit() {
+//     // if (this.selectedFile) {
+//     //   const formData = new FormData();
+//     //   formData.append('file', this.selectedFile);
+
+//     //   this.movieService.uploadPhoto(formData).subscribe((response: any) => {
+//     //     this.movie.themePhotoPath = response.path;
+//     //     this.saveMovie();
+//     //   });
+//     // } else {
+//     //   this.saveMovie();
+//     // }
+//     const formData = new FormData();
+//     formData.append('name',this.movie.name);
+//     formData.append('imdbRating',this.movie.imdbRating);
+//     formData.append('categoryId',this.movie.categoryId);
+//     formData.append('genreId',this.movie.genreId);
+//     formData.append('realseDate',this.movie.realseDate);
+//     formData.append('duration',this.movie.duration);
+//     if(this.selectedFile){
+//       formData.append('themePhoto',this.selectedFile);
+//     }
+//     this.movieService.addMovie(formData).subscribe(() =>{
+//       this.router.navigate(['/admin/movies-management']);
+//     });
+
+//   }
+
+// onFileChange(event: any) {
+//     this.selectedFile = event.target.files[0];
+//   }
+
+// saveMovie() {
+//     this.movieService.addMovie(this.movie).subscribe(() => {
+//       this.router.navigate(['/admin/movies-management']);
+//     });
+//   }
+
+onFileChange(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    this.selectedFile = file;
+  }
+}
+
+onSubmit() {
+  if (this.selectedFile) {
+    this.uploadImageAndSaveMovie();
+  } else {
+    this.saveMovie();
+  }
+}
+
+uploadImageAndSaveMovie() {
+  const formData = new FormData();
+  if(this.selectedFile){
+    formData.append('file', this.selectedFile);
+  }
+  else{
+    console.error("no file selected");
+  }
+  
+  this.movieService.uploadImage(formData).subscribe((response: any) => {
+    this.movie.themePhotoPath = response.filePath;
+    
+    this.saveMovie();
+  });
+}
+saveMovie() {
+  this.movieService.addMovie(this.movie).subscribe(() => {
+    const formData = new FormData();
+    formData.append('name',this.movie.name);
+    formData.append('imdbRating',this.movie.imdbRating);
+    formData.append('category',this.movie.category);
+    formData.append('genre',this.movie.genre);
+    formData.append('realseDate',this.movie.realseDate);
+    formData.append('duration',this.movie.duration);
+    formData.append('ThemePhotoPath',this.movie.themePhotoPath);
+
+
+    this.router.navigate(['/admin/movies']);
+  });
+}
+}
+
+========================================================
+
+<div class="card">
+    <div class="card-body" >
+      <h5 class="card-title">Add Movie</h5>
+      <form (ngSubmit)="onSubmit()" #movieForm="ngForm">
+        <div class="mb-3">
+          <label for="name" class="form-label">Name</label>
+          <input type="text" class="form-control" id="name" name="name" [(ngModel)]="movie.name" required>
+        </div>
+        <div class="mb-3">
+          <label for="imdbRating" class="form-label">IMDb Rating</label>
+          <!-- <select class="form-select" id="imdbRating" name="imdbRating" [(ngModel)]="movie.imdbRating" required>
+            <option value="1">1 Star</option>
+            <option value="2">2 Stars</option>
+            <option value="3">3 Stars</option>
+            <option value="4">4 Stars</option>
+            <option value="5">5 Stars</option>
+          </select> -->
+          <input type="text" class="form-control" id="imdbRating" name="imdbRating" [(ngModel)]="movie.imdbRating" required>
+        </div>
+        <div class="mb-3">
+          <label for="category" class="form-label">Category</label>
+          <select class="form-select" id="category" name="category" [(ngModel)]="movie.category" required>
+            <option *ngFor="let category of categories" [value]="category.name">{{ category.name }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="genre" class="form-label">Genre</label>
+          <select class="form-select" id="genre" name="genre" [(ngModel)]="movie.genre" required>
+            <option *ngFor="let genre of genres" [value]="genre.name">{{ genre.name }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="releaseDate" class="form-label">Release Date</label>
+          <input type="date" class="form-control" id="releaseDate" name="releaseDate" [(ngModel)]="movie.releaseDate" required>
+        </div>
+        <div class="mb-3">
+          <label for="duration" class="form-label">Duration (minutes)</label>
+          <input type="number" class="form-control" id="duration" name="duration" [(ngModel)]="movie.duration" required>
+        </div>
+        <div class="mb-3">
+          <label for="themePhoto" class="form-label">Theme Photo</label>
+          <input type="file" class="form-control" id="themePhotoPath" name="themePhotoPath" (change)="onFileChange($event)" [(ngModel)]="movie.themePhotoPath" accept="image/*" required>
+        </div>
+        <!-- Add here -->
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+
+========================================================================================
+
+
+  
