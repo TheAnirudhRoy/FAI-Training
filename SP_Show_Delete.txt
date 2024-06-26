@@ -47,3 +47,14 @@ BEGIN
     END CATCH;
 END;
 GO
+
+This is an example of Stored Procedure logic that I have to implement, AFTER Delete FROM Show is performed it should Delete A movie record on the basis of Movie table's Id. Create a new stored Procedure WHICH will take movie's Id input and first get all the details with the following JOIN Query
+
+SELECT S.Time, S.TheatreId
+FROM Show AS S
+INNER JOIN Movie AS M
+ON M.Id = S.MovieId
+WHERE M.Id = @Id;
+
+Here @Id would be the input parameter of the newly created stored procedure. It should be able to EXEC spc_deleteShow @Time, @TheatreId, @MovieId MULTIPLE TIMES AS THE join query above will return multiple rows. with required @Time and @TheatreId. Finally it should have Output parameter @Result int same logic used in the above example of spc_deleteShow.
+
