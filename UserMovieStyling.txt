@@ -1,0 +1,19 @@
+<div class="container mt-4">
+            <div class="row">
+                <div class="col-md-4" *ngFor="let movie of movies">
+                    <div class="card mb-3 shadow-sm">
+                        <img
+                        [src]="getImagePath(movie.themePhotoPath)"
+                        class="card-img-top"
+                        alt="{{movie.name}}"
+                        (click)="navigateToMovieDetails(movie)"
+                        style="cursor:pointer;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{movie.name}}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+I want padding between each card created there should be a gap. Give me the css (Re write this html code if required incase addition of classes is needed)
