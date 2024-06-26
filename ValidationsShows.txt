@@ -1,0 +1,134 @@
+<ng-template #addShowModal let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Add Show</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+    </div>
+    <div class="modal-body">
+      <form #addShowForm="ngForm" (ngSubmit)="addShow(addShowForm)">
+        <div class="form-group">
+          <label for="time">Time:</label>
+          <input id="time" name="time" ngModel type="text" required class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="movieId">Movie ID:</label>
+          <input id="movieId" name="movieId" ngModel type="text" required class="form-control" />
+        </div>
+        <div class="form-group">
+          <label for="theatreId">Theatre ID:</label>
+          <input id="theatreId" name="theatreId" ngModel type="text" required class="form-control" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel click')">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!addShowForm.valid">Add Show</button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+
+=================================
+
+import { Component, OnInit } from '@angular/core';
+import { ShowService } from '../../services/show.service'; 
+import { MovieService } from '../../services/movie.service'; 
+import { TheatreService } from '../../services/theatre.service'; 
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgForm } from '@angular/forms';
+
+@Component({
+  selector: 'app-shows-management',
+  templateUrl: './shows-management.component.html',
+  styleUrl: './shows-management.component.css'
+})
+export class ShowsManagementComponent implements OnInit {
+  shows: any[] = [];
+  movies: any[] = [];
+  theatres: any[] = [];
+  selectedShow: any = {};
+
+  constructor(private showService: ShowService, private modalService: NgbModal) {}
+
+  ngOnInit(): void {
+    this.loadMovies();
+    this.loadTheatres();
+  }
+
+  loadMovies(): void {
+    this.showService.getMovies().subscribe(
+      (data) => {
+        this.movies = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+  loadTheatres(): void {
+    this.showService.getTheatres().subscribe(
+      (data) => {
+        this.theatres = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+  searchShows(searchForm: NgForm): void {
+    const { movieId, theatreId } = searchForm.value;
+    this.showService.getShowsbyMovieAndTheatre(movieId, theatreId).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    );
+  }
+
+  searchShowsAfterDelete(searchForm: NgForm): void {
+    const {theatreName, movieName } = searchForm.value;
+    this.showService.getShowsbyTheatreNameAndMovieName(theatreName, movieName).subscribe(
+      (data) => {
+        this.shows = data;
+      },
+      (error) => {
+        console.error('Error fetching shows:', error);
+      }
+    )
+  }
+
+  deleteShow(show: any): void {
+    this.showService.deleteShow(show.time, show.theatreName, show.movieName).subscribe(
+      (result) => {
+        console.log(result);
+        this.searchShowsAfterDelete({ value: { theatreName: show.theatreName, movieName: show.movieName } } as NgForm); // Refresh the list after deletion
+      },
+      (error) => {
+        console.error('Error deleting show:', error);
+      }
+    );
+  }
+
+  openAddShowModal(content: any): void {
+    this.selectedShow = {};
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' });
+  }
+
+  addShow(addShowForm: NgForm): void {
+    const newShow = addShowForm.value;
+    this.showService.addShow(newShow).subscribe(
+      (result) => {
+        console.log(result);
+        this.modalService.dismissAll();
+        this.searchShows({ value: { movieId: newShow.movieId, theatreId: newShow.theatreId } } as NgForm); // Refresh the list after adding
+      },
+      (error) => {
+        console.error('Error adding show:', error);
+      }
+    );
+  }
+}
+
+Add validations in the html Angular in all three input types, Time input should contain value in HH:MM format where HH and MM are digits according to 24 hour clock.
+In the movieId and TheatreId input make it required field and Id should only be INTEGER TYPE nothing else apart from that.
