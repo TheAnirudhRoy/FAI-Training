@@ -132,3 +132,49 @@ export class ShowsManagementComponent implements OnInit {
 
 Add validations in the html Angular in all three input types, Time input should contain value in HH:MM format where HH and MM are digits according to 24 hour clock.
 In the movieId and TheatreId input make it required field and Id should only be INTEGER TYPE nothing else apart from that.
+===========================================================================================================================
+
+<ng-template #addShowModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Add Show</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <form #addShowForm="ngForm" (ngSubmit)="addShow(addShowForm)">
+      <div class="form-group">
+        <label for="time">Time:</label>
+        <input id="time" name="time" ngModel type="text" required pattern="^(?:[01]\d|2[0-3]):[0-5]\d$" class="form-control" />
+        <div *ngIf="addShowForm.controls['time']?.errors?.required && addShowForm.controls['time']?.touched" class="text-danger">
+          Time is required.
+        </div>
+        <div *ngIf="addShowForm.controls['time']?.errors?.pattern && addShowForm.controls['time']?.touched" class="text-danger">
+          Time must be in the format HH:MM and a valid time (e.g., 14:00, 21:00, 10:30).
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="movieId">Movie ID:</label>
+        <input id="movieId" name="movieId" ngModel type="number" required class="form-control" />
+        <div *ngIf="addShowForm.controls['movieId']?.errors?.required && addShowForm.controls['movieId']?.touched" class="text-danger">
+          Movie ID is required.
+        </div>
+        <div *ngIf="addShowForm.controls['movieId']?.errors?.pattern && addShowForm.controls['movieId']?.touched" class="text-danger">
+          Movie ID must be an integer.
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="theatreId">Theatre ID:</label>
+        <input id="theatreId" name="theatreId" ngModel type="number" required class="form-control" />
+        <div *ngIf="addShowForm.controls['theatreId']?.errors?.required && addShowForm.controls['theatreId']?.touched" class="text-danger">
+          Theatre ID is required.
+        </div>
+        <div *ngIf="addShowForm.controls['theatreId']?.errors?.pattern && addShowForm.controls['theatreId']?.touched" class="text-danger">
+          Theatre ID must be an integer.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.dismiss('cancel click')">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!addShowForm.valid">Add Show</button>
+      </div>
+    </form>
+  </div>
+</ng-template>
