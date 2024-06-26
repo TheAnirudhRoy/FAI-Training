@@ -1,0 +1,68 @@
+USE BookMyShowDB;
+GO
+
+CREATE OR ALTER PROCEDURE spc_deleteMovieShows
+    @MovieId int,
+    @Result int OUTPUT
+AS
+BEGIN
+    DECLARE @Time nvarchar(50);
+    DECLARE @TheatreId int;
+    DECLARE @DeleteResult int;
+    DECLARE @SuccessCount int = 0;
+    DECLARE @TotalCount int = 0;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Cursor to iterate over each show related to the movie
+        DECLARE ShowCursor CURSOR FOR
+        SELECT S.Time, S.TheatreId
+        FROM Show AS S
+        INNER JOIN Movie AS M
+        ON M.Id = S.MovieId
+        WHERE M.Id = @MovieId;
+
+        OPEN ShowCursor;
+
+        FETCH NEXT FROM ShowCursor INTO @Time, @TheatreId;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            SET @TotalCount = @TotalCount + 1;
+            EXEC spc_deleteShow @Time, @TheatreId, @MovieId, @DeleteResult OUTPUT;
+            IF @DeleteResult = 1
+            BEGIN
+                SET @SuccessCount = @SuccessCount + 1;
+            END
+
+            FETCH NEXT FROM ShowCursor INTO @Time, @TheatreId;
+        END
+
+        CLOSE ShowCursor;
+        DEALLOCATE ShowCursor;
+
+        -- Delete movie from Movie table if all related shows were successfully deleted
+        IF @SuccessCount = @TotalCount
+        BEGIN
+            DELETE FROM Movie
+            WHERE Id = @MovieId;
+            SET @Result = 1; -- Success
+        END
+        ELSE IF @SuccessCount > 0
+        BEGIN
+            SET @Result = 0; -- Partial Success
+        END
+        ELSE
+        BEGIN
+            SET @Result = -1; -- Failure
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        SET @Result = -1; -- Failure due to exception
+    END CATCH;
+END;
+GO
