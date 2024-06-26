@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome Admin Card</title>
     <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('path_to_background_image.jpg');
+            background-size: cover;
+            background-position: center;
+        }
         .card {
             display: flex;
             align-items: center;
